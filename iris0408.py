@@ -15,25 +15,19 @@ iris['target'] = data.target
 # 결측치 제거
 iris.dropna(inplace=True)
 
-# 상관 행렬 시각화
-sns.set(rc={'figure.figsize': (12, 10)})
-correlation_matrix = iris.corr().round(2)
-sns.heatmap(data=correlation_matrix, annot=True)
-plt.savefig('heatmap.jpg')
-plt.show()
-print()
 
-# 상관 관계 특성 선택
-X = iris[['sepal length (cm)', 'petal length (cm)']]
+X = iris[['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']]
 y = iris['target']
 
 # 데이터 분할
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
+
 # 특성 데이터 표준화
 scalerX = StandardScaler()
 X_train_std = scalerX.fit_transform(X_train)
 X_test_std = scalerX.transform(X_test)
+
 
 # KNN 분류 모델 학습
 knn = KNeighborsClassifier(n_neighbors=3)
