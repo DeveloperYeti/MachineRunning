@@ -38,12 +38,12 @@ plt.xlabel('Principal Component')
 plt.ylabel('Explained Variance')
 plt.show()
 
-component = 10
+component = 30
 
 pca = PCA(n_components= component)
 Z = pca.fit_transform(X_std)
 
-Z_df = pd.DataFrame(data=Z[:, :10], columns=['PC1', 'PC2', 'PC3','pc4','pc5','pc6','pc7','pc8','pc9','pc10'])
+Z_df = pd.DataFrame(data=Z[:, :component], columns=[f'PC{i}' for i in range(1, component + 1)])
 print(Z_df.head())
 
 # loadings = pca.components_
@@ -74,50 +74,54 @@ else:
 print()
 
 
-# PCA 변환
+
 X_pca = Z
-# 데이터 분할
+    # 데이터 분할
 
 scalerX.fit(X_pca)
 X_train_std = scalerX.transform(X_pca)
+X_test_std = scalerX.transform(X_pca)
 
+for i in reversed(range(0, 4)):
+    X_train, X_test, y_train, y_test = train_test_split(X_pca, df['target'], test_size=0.3, random_state=i)
 
-# KNN 분류 모델 학습
-knn = KNeighborsClassifier(n_neighbors=3)
-knn.fit(X_train_std, df['target'])
+    knn = KNeighborsClassifier(n_neighbors=3)
+    knn.fit(X_train, y_train)
 
-best_model = {"k":0,"score":0.0}
-## 최근접 이웃 수 결정
-# 학습용 데이터의 분류 정확도
-train_accuracy = []
+    best_model = {"k": 0, "score": 0.0}
+    ## 최근접 이웃 수 결정
+    # 학습용 데이터의 분류 정확도
+    train_accuracy = []
+    test_accuracy = []
 
-# 최근접 이웃의 수 : 1~15
-neighbors = range(2, 16)
-for k in neighbors:
-    # 모형화
-    knn = KNeighborsClassifier(n_neighbors=k)
-    # 학습
-    knn.fit(X_train_std, df['target'])
-    # 학습 데이터의 분류 정확도
-    score = knn.score(X_train_std, df['target'])
-    train_accuracy.append(score)
-    if best_model["score"] < score:
-        best_model["k"] = k
-        best_model["score"] = score
-print(best_model)
+    # 최근접 이웃의 수 : 1~15
+    neighbors = range(2, 16)
+    for k in neighbors:
+        # 모형화
+        knn = KNeighborsClassifier(n_neighbors=k)
+        # 학습
+        knn.fit(X_train, y_train)
+        # 학습 데이터의 분류 정확도
+        score = knn.score(X_train, y_train)
+        train_accuracy.append(score)
+        # 테스트 데이터의 분류 정확도
+        score = knn.score(X_test, y_test)  # 여기서 수정
+        test_accuracy.append(score)
+        if best_model["score"] < score:
+            best_model["k"] = k
+            best_model["score"] = score
 
+    print(best_model)
 
-
-# K의 크기에 따른 분류 정확도 변화
-plt.figure(figsize=(16,8))
-plt.plot(neighbors, train_accuracy, label='train')
-plt.title("component = 10")
-plt.xlabel('K')
-plt.ylabel('Accuracy')
-plt.legend()
-plt.savefig('knn components Original.png')
-plt.show()
-
+    plt.figure(figsize=(16, 8))
+    plt.plot(neighbors, train_accuracy, label='train')
+    plt.plot(neighbors, test_accuracy, label='test')
+    plt.title(f"random state{i}")
+    plt.xlabel('K')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.savefig(f'knn_components_Original_random_state_{i}.png')  # 파일명에 랜덤 시드 추가
+    plt.show()
 
 
 
